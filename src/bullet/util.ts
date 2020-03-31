@@ -73,4 +73,22 @@ const setStyle = (target: HTMLElement, css: {[propName: string]: string}): void 
   }
 }
 
-export { initDanmakuAnimate, getBulletContainer }
+/**
+ * 节流函数
+ * @param fn 被节流函数
+ * @param timeout 间隔
+ */
+const throttle = function(fn: Function, timeout: number): Function {
+  let lastTime = 0;
+  return function () {
+    let now = new Date().getTime();
+    console.log(now, lastTime)
+    if (now - lastTime > timeout) {
+      console.log('throttle!!')
+      fn.apply(null, arguments)
+      lastTime = now;
+    }
+  }
+}
+
+export { initDanmakuAnimate, getBulletContainer, throttle }
