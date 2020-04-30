@@ -4,10 +4,17 @@ import ReactDOM from "react-dom";
 import { initDanmakuAnimate, getBulletContainer, throttle } from "./util";
 import DanmakuUi from "./danmaku-ui";
 
+/**
+ * trackHeight 轨道行高
+ * gap 发出的弹幕距离容器的像素
+ * overWritten 是否允许覆盖弹幕
+ */
 interface Options {
-	trackHeight: number;
+	trackHeight: number; 
 	gap: string;
 }
+
+type TrackStatus = 'idle' | 'pending';
 
 interface EventOpts {
 	onMouseEnter?: Function;
@@ -53,8 +60,7 @@ export default class Danmaku {
 		}
 		// 初始化轨道
 		const { height, width } = this.target.getBoundingClientRect();
-		// this.tracks = Array(Math.floor(height / trackHeight)).fill('idle');
-		this.tracks = Array(2).fill('idle');
+		this.tracks = Array(Math.floor(height / trackHeight)).fill('idle');
 		// 容器对象必须是 非 static 属性对象
 		const { position } = getComputedStyle(this.target);
 		if (position === "static") {
@@ -65,7 +71,7 @@ export default class Danmaku {
 	}
 	options = defalutOptions;
 	target: HTMLElement | null = null;
-	tracks: string[] = [];
+	tracks: TrackStatus[] = [];
 	bullets: HTMLElement[] = [];
 	queue: BulletQueue[] = [];
 
@@ -74,20 +80,23 @@ export default class Danmaku {
 	 * @memberof Danmaku
 	 */
 	getTrack(): number {
-    console.log('2. getTrack')
 		const { tracks } = this;
-		const readyIdxs = [];
+		const readyIdxs: number[] = [];
 		let idx = -1;
 		tracks.map((status, idx) => status === "idle" && readyIdxs.push(idx));
 		if (readyIdxs.length) {
 			idx = Math.floor(Math.random() * readyIdxs.length);
 		}
 		if (idx !== -1) {
-      console.log(idx, 'pending');
-			this.tracks[idx] = "pending";
+			this.tracks[readyIdxs[idx]] = "pending";
 		}
-		return idx;
-  }
+		return readyIdxs[idx];
+	}
+	
+	getTracks(): number[] {
+		const { tracks } = this;
+		return tracks.filter(status => status === 'idle').reduce<number[]>((t, c, i) => ([...t, i]), [])
+	}
   
   /**
    * 设置管道空闲状态
@@ -95,9 +104,17 @@ export default class Danmaku {
    * @memberof Danmaku
    */
   setTrackIdle(trackIdx: number): void {
-    console.log('4. setTrack')
-    this.tracks[trackIdx] = 'idle'
-  }
+		this.tracks[trackIdx] = 'idle';
+	}
+
+  /**
+   * 设置管道繁忙状态
+   * @param {number} trackIdx
+   * @memberof Danmaku
+   */
+  setTrackPending(trackIdx: number): void {
+    this.tracks[trackIdx] = 'pending'
+	}
 
 	/**
 	 * 发布弹幕
@@ -106,14 +123,11 @@ export default class Danmaku {
 	 * @memberof Danmaku
 	 */
 	push = throttle((item: JSX.Element, opts: EventOpts = {}): void => {
-    console.log('1. push');
-    const idx = this.getTrack();
-    console.log('idx', idx);
 		const container = getBulletContainer({});
-    if (idx !== -1) {
+		const idx = this.getTrack();
+		if (idx !== -1) { 
 			this.render(item, container, idx);
 		} else {
-      console.log('pushQueue')
 			this.queue.push({ item, container });
 		}
 		// 储存弹幕 在全局暂停时 可进行操作
@@ -155,7 +169,7 @@ export default class Danmaku {
 				e.stopPropagation();
 				onMouseClick.call(container, e, this);
 			});
-	}, 0)
+	}, 300)
 
 	/**
 	 * 将弹幕渲染进容器中
@@ -165,7 +179,7 @@ export default class Danmaku {
 	 * @memberof Danmaku
 	 */
 	render(item: JSX.Element, container: HTMLElement, trackIdx: number): void {
-    console.log('3. render')
+    console.log('4. render trackIdx:', trackIdx);
 		this.target?.appendChild(container);
 		const { trackHeight } = this.options;
 		const bulletTop = trackIdx * trackHeight;
@@ -187,15 +201,15 @@ export default class Danmaku {
 					const { target, intersectionRatio }: { target: Element; intersectionRatio: number } = entry;
 					// 确保当前弹幕在容器中完全可见
 					if (intersectionRatio >= 1) {
-            const curIdx = Number((target as HTMLElement).dataset.trackIdx);
+						const curIdx = Number((target as HTMLElement).dataset.trackIdx);
 						if (this.queue.length) {
 							// 将队列中 未发送的弹幕取出并发送
-              const { item: i, container: c } = this.queue.shift() as BulletQueue;
+							const { item: i, container: c } = this.queue.shift() as BulletQueue;
 							this.render(i, c, curIdx);
 						} else {
-              // 直接将当前轨道状态置空闲
-              this.setTrackIdle(curIdx)
-            }
+							// 直接将当前轨道状态置空闲
+							this.setTrackIdle(curIdx)
+						}
           }
           return 0
 				});
