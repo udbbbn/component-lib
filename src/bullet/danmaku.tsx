@@ -1,28 +1,32 @@
 import React from "react";
 import ReactDOM from "react-dom";
 
-import { initDanmakuAnimate, getBulletContainer, throttle } from "./util";
+import { initDanmakuAnimate, getBulletContainer, throttle, toString } from "./util";
 import DanmakuUi from "./danmaku-ui";
 
 /**
  * trackHeight 轨道行高
  * gap 发出的弹幕距离容器的像素
- * overWritten 是否允许覆盖弹幕
  */
-interface Options {
+interface OptionsBase { 
 	trackHeight: number; 
 	gap: string;
+	comments: string[] | string;
 }
+
+interface Options extends Partial<OptionsBase> {}
 
 type TrackStatus = 'idle' | 'pending';
 
-interface EventOpts {
-	onMouseEnter?: Function;
-	onMouseLeave?: Function;
-	onMouseClick?: Function;
-	onStart?: Function;
-	onEnd?: Function;
+interface EventBase {
+	onMouseEnter: Function;
+	onMouseLeave: Function;
+	onMouseClick: Function;
+	onStart: Function;
+	onEnd: Function;
 }
+
+interface EventOpts extends Partial<EventBase> {}
 
 interface CssOpts {}
 
@@ -31,7 +35,7 @@ interface BulletQueue {
 	container: HTMLElement;
 }
 
-const defalutOptions: Options = {
+const defalutOptions: Partial<Options> = {
 	trackHeight: 50,
 	gap: "10px",
 };
@@ -43,10 +47,11 @@ export default class Danmaku {
 	 * @param {*} [opt={}] 可配置项
 	 * @memberof Danmaku
 	 */
-	constructor(el: HTMLElement | string, opt = {}) {
+	constructor(el: HTMLElement | string, opt: Partial<Options> = {}) {
 		// 可配置项
 		this.options = { ...this.options, ...opt };
 		const { trackHeight } = this.options;
+		let { comments } = this.options;
 		// 初始化容器对象
 		if (typeof el === "string") {
 			this.target = document.querySelector(el);
@@ -60,14 +65,25 @@ export default class Danmaku {
 		}
 		// 初始化轨道
 		const { height, width } = this.target.getBoundingClientRect();
-		this.tracks = Array(Math.floor(height / trackHeight)).fill('idle');
+		this.tracks = Array(Math.floor(height / (trackHeight as number))).fill('idle');
 		// 容器对象必须是 非 static 属性对象
 		const { position } = getComputedStyle(this.target);
 		if (position === "static") {
 			this.target.style.position = "relative";
 		}
+		// 初始化初始弹幕
+		if (comments) {
+			if (toString(comments) === '[object String]') {
+				comments = [(comments as string)];
+			}
+			if (toString(comments) === '[object Array]') {
+				this.setComments(comments as string[]);
+			}
+		}
 		// 初始化 css 动画
 		initDanmakuAnimate(this.target, width);
+		// 渲染预设数组
+		this.mountComments();
 	}
 	options = defalutOptions;
 	target: HTMLElement | null = null;
@@ -93,13 +109,16 @@ export default class Danmaku {
 		return readyIdxs[idx];
 	}
 	
+	/**
+	 * 获取空闲轨道
+	 */
 	getTracks(): number[] {
 		const { tracks } = this;
 		return tracks.filter(status => status === 'idle').reduce<number[]>((t, c, i) => ([...t, i]), [])
 	}
   
   /**
-   * 设置管道空闲状态
+   * 设置轨道空闲状态
    * @param {number} trackIdx
    * @memberof Danmaku
    */
@@ -108,12 +127,37 @@ export default class Danmaku {
 	}
 
   /**
-   * 设置管道繁忙状态
+   * 设置轨道繁忙状态
    * @param {number} trackIdx
    * @memberof Danmaku
    */
   setTrackPending(trackIdx: number): void {
     this.tracks[trackIdx] = 'pending'
+	}
+
+	/**
+	 * 设置预设弹幕
+	 * @param comments[] 预设弹幕数组 目前为字符串
+	 */
+	setComments(comments: string[]): void {
+		comments.map(el => {
+			const container = getBulletContainer({});
+			this.queue.push({ item: <DanmakuUi msg={el}></DanmakuUi>, container });
+			this.bullets.push(container);
+		})
+	}
+
+	/**
+	 * 渲染预设数组
+	 */
+	mountComments(): void {
+		const { item: i, container: c } = this.queue.shift() as BulletQueue;
+		const idx = this.getTrack();
+		if (this.queue.length) {
+			setTimeout(() => { this.mountComments() });
+		}
+		this.render(i, c, idx);
+		this.setEventListener(c)
 	}
 
 	/**
@@ -132,9 +176,17 @@ export default class Danmaku {
 		}
 		// 储存弹幕 在全局暂停时 可进行操作
 		this.bullets.push(container);
+		// 设置事件监听
+		this.setEventListener(container, opts)
+	}, 300)
 
-		const options = { ...this.options, ...opts };
-		const { onStart, onEnd, onMouseEnter, onMouseLeave, onMouseClick } = options;
+	/**
+	 * 设置事件监听
+	 * @param container 弹幕容器
+	 * @param opts EventOpts 对象
+	 */
+	setEventListener(container: HTMLElement, opts: EventOpts = {}): void {
+		const { onStart, onEnd, onMouseEnter, onMouseLeave, onMouseClick } = opts;
 
 		// 动画开始
 		container.addEventListener("animationstart", () => {
@@ -169,7 +221,7 @@ export default class Danmaku {
 				e.stopPropagation();
 				onMouseClick.call(container, e, this);
 			});
-	}, 300)
+	}
 
 	/**
 	 * 将弹幕渲染进容器中
@@ -179,10 +231,9 @@ export default class Danmaku {
 	 * @memberof Danmaku
 	 */
 	render(item: JSX.Element, container: HTMLElement, trackIdx: number): void {
-    console.log('4. render trackIdx:', trackIdx);
 		this.target?.appendChild(container);
 		const { trackHeight } = this.options;
-		const bulletTop = trackIdx * trackHeight;
+		const bulletTop = trackIdx * (trackHeight as number);
 		container.dataset.trackIdx = `${trackIdx}`;
 
 		const { gap } = this.options;

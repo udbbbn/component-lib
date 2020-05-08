@@ -84,11 +84,12 @@ const throttle = function(fn: Function, timeout: number): Function {
     let now = new Date().getTime();
     console.log(now, lastTime)
     if (now - lastTime > timeout) {
-      console.log('throttle!!')
       fn.apply(null, arguments)
       lastTime = now;
     }
   }
 }
 
-export { initDanmakuAnimate, getBulletContainer, throttle }
+const toString = (vm: any) => Object.prototype.toString.call(vm);
+
+export { initDanmakuAnimate, getBulletContainer, throttle, toString }
