@@ -2,7 +2,8 @@ import React from 'react'
 
 interface uiParams {
   msg: string,
-  size?: string
+  size?: string,
+  style?: object
 }
 
 const wrapperStyle = {
@@ -19,10 +20,10 @@ const sizes: { [propName: string]: string } = {
   large: '14px',
 }
 
-export default function DanmakuUi({ msg, size = 'normal' }: uiParams) {
+export default function DanmakuUi({ msg, size = 'normal', style }: uiParams) {
   const fontSize = sizes[size];
   return (
-    <div style={{ ...wrapperStyle, fontSize }}>
+    <div style={{ ...wrapperStyle, fontSize, ...style }}>
       {msg}
     </div>
   )

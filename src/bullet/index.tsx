@@ -48,21 +48,25 @@ export default function Bullet() {
   let inputValue = '';
 
   useEffect(() => {
-    const _screen = new Danmaku('.main-wrapper');
+    const _screen = new Danmaku('.main-wrapper', {
+      comments: ['测试弹幕', '预设弹幕', '初始化时设置预设弹幕', '感觉页面卡顿', '猜测是短时间创建多次创建 dom'],
+    });
     setScreen(_screen);
   }, [])
 
   function pushDanmaku() {
     const msg = inputValue;
-    const params = { msg } ;
+    const params = { msg, style: { border: '1px solid #eee' } } ;
     screen?.push(
       <DanmakuUi
         {...params}
       ></DanmakuUi>,
       {
-        onMouseEnter: function(...arg: any){console.log(this, ...arg)},
-        onMouseLeave: function(...arg: any){console.log(this, ...arg)},
-        onMouseClick: (...arg: any) => {console.log(...arg)},
+        onMouseEnter: function(...arg: any){console.log('onMouseEnter:', this, ...arg)},
+        onMouseLeave: function(...arg: any){console.log('onMouseLeave:', this, ...arg)},
+        onMouseClick: (...arg: any) => {console.log('onMouseClick:',...arg)},
+        onStart: (...arg: any) => {console.log('onStart:',...arg)},
+        onEnd: (...arg: any) => {console.log('onEnd:', ...arg)},
       }
     )
   }
