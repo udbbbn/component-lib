@@ -6,17 +6,21 @@ interface ParticlesState {
   my: number // my y轴 移动的距离
   canvasW: number // canvas 的宽度
   canvasH: number // canvas 的高度
+  lineMaxDistance: number; // 连线距离最大限制
+  lineMinDistance: number; // 连线距离最小限制
 }
 
 // 基础粒子对象
 class Particles implements ParticlesState {
   x: number
   y: number
-  r: number = Math.random() * 10 + 1;
-  mx: number = Math.random() * 2 - 1;
-  my: number = Math.random() * 2 - 1;
   canvasW: number
   canvasH: number
+  r = Math.random() * 10 + 1;
+  mx = Math.random() * 2 - 1;
+  my = Math.random() * 2 - 1;
+  lineMaxDistance = 150;
+  lineMinDistance = 100;
 
   constructor(
     x: number,
@@ -49,7 +53,7 @@ class Particles implements ParticlesState {
   drawLine(ctx: CanvasRenderingContext2D, nextCircle: Particles) {
     // 两个圆点之间的距离
     const distance = Math.sqrt(Math.pow(this.x - nextCircle.x, 2) + Math.pow(this.y - nextCircle.y, 2));
-    if (distance < 150) {
+    if (distance < this.lineMaxDistance) {
       ctx.beginPath();
       ctx.moveTo(this.x, this.y);
       ctx.lineTo(nextCircle.x, nextCircle.y);
@@ -71,7 +75,7 @@ class Particles implements ParticlesState {
     if (ifMouse) {
       const distance = Math.sqrt(Math.pow(this.x - mouseX, 2) + Math.pow(this.y - mouseY, 2));
       // 直接修改 x y 坐标 形成加速效果
-      if (distance >= 100 && distance <= 150) {
+      if (distance >= this.lineMinDistance && distance <= this.lineMaxDistance) {
         this.x += (mouseX - this.x) / 20;
         this.y += (mouseY - this.y) / 20;
       }
@@ -93,6 +97,7 @@ interface MouseParticlesState {
   r: number;
   maxLineNumber: number; // 最多连线数量
   lineNumber: number; // 当前连线数量
+  lineMaxDistance: number; // 连线距离限制
 }
 
 // 基于鼠标的粒子对象
@@ -102,6 +107,7 @@ class MouseParticles implements MouseParticlesState {
   r = 8;
   maxLineNumber = 10;
   lineNumber = 0;
+  lineMaxDistance = 150;
 
   constructor(
     x: number,
@@ -132,8 +138,7 @@ class MouseParticles implements MouseParticlesState {
   drawLine(ctx: CanvasRenderingContext2D, nextCircle: Particles): boolean {
     // 两个圆点之间的距离
     const distance = Math.sqrt(Math.pow(this.x - nextCircle.x, 2) + Math.pow(this.y - nextCircle.y, 2));
-    console.log(this.lineNumber)
-    if (distance < 150 && this.lineNumber < this.maxLineNumber) {
+    if (distance < this.lineMaxDistance && this.lineNumber < this.maxLineNumber) {
       ctx.beginPath();
       ctx.moveTo(this.x, this.y);
       ctx.lineTo(nextCircle.x, nextCircle.y);
