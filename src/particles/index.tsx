@@ -13,7 +13,8 @@ export default function Particle() {
 
   useEffect(() => {
     canvasInit();
-  });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function canvasInit() {
     canvas = document.querySelector('#canvas');
@@ -25,8 +26,13 @@ export default function Particle() {
       canvas.onmousemove = mouseMove;
       canvas.onmouseout = mouseOut;
       window.onresize = canvasResize;
-      circlesInit(20, w, h);
+      circlesInit(getCirclesLength(), w, h);
     }
+  }
+
+  function getCirclesLength() {
+    const { width } = canvas!.getBoundingClientRect();
+    return width / 25
   }
 
   function circlesInit(num: number, w: number, h: number) {
@@ -50,7 +56,6 @@ export default function Particle() {
           circles[i].drawLine(ctx as CanvasRenderingContext2D, circles[j])
         }
       }
-      // attract = true;
     }
     for(let i = 0; i < circles.length; i++) {
       circles[i].move(attract, mouseParticles!.x, mouseParticles!.y);
@@ -76,7 +81,8 @@ export default function Particle() {
     const { width, height } = canvas!.getBoundingClientRect();
     canvas!.width = width;
     canvas!.height = height;
-    console.log(canvas)
+    w = canvas!.width = canvas!.offsetWidth;
+    h = canvas!.height = canvas!.offsetHeight;
   }
 
   /**
