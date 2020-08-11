@@ -24,7 +24,7 @@ export default function Particle() {
       mouseParticles = new MouseParticles(0, 0);
       canvas.onmousemove = mouseMove;
       canvas.onmouseout = mouseOut;
-      circlesInit(100, w, h);
+      circlesInit(20, w, h);
     }
   }
 
@@ -39,11 +39,17 @@ export default function Particle() {
     ctx?.clearRect(0, 0, w, h);
     let attract = false;
     if (mouseParticles?.x) {
+      mouseParticles.resetLineNumber();
       mouseParticles?.drawCircle(ctx as CanvasRenderingContext2D);
-      for (let j = 0; j < circles.length; j++) {
-        mouseParticles!.drawLine(ctx as CanvasRenderingContext2D, circles[j])
+      for (let i = 0; i < circles.length; i++) {
+        attract = mouseParticles!.drawLine(ctx as CanvasRenderingContext2D, circles[i])
+        circles[i].move(attract, mouseParticles!.x, mouseParticles!.y);
+        circles[i].drawCircle(ctx as CanvasRenderingContext2D);
+        for (let j = i+1; j < circles.length; j++) {
+          circles[i].drawLine(ctx as CanvasRenderingContext2D, circles[j])
+        }
       }
-      attract = true;
+      // attract = true;
     }
     for(let i = 0; i < circles.length; i++) {
       circles[i].move(attract, mouseParticles!.x, mouseParticles!.y);

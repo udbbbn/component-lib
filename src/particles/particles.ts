@@ -71,7 +71,7 @@ class Particles implements ParticlesState {
     if (ifMouse) {
       const distance = Math.sqrt(Math.pow(this.x - mouseX, 2) + Math.pow(this.y - mouseY, 2));
       // 直接修改 x y 坐标 形成加速效果
-      if (distance >= 100 && distance <= 200) {
+      if (distance >= 100 && distance <= 150) {
         this.x += (mouseX - this.x) / 20;
         this.y += (mouseY - this.y) / 20;
       }
@@ -91,20 +91,26 @@ interface MouseParticlesState {
   x: number;
   y: number;
   r: number;
+  maxLineNumber: number; // 最多连线数量
+  lineNumber: number; // 当前连线数量
 }
 
 // 基于鼠标的粒子对象
 class MouseParticles implements MouseParticlesState {
   x: number;
   y: number;
-  r: number = 8;
+  r = 8;
+  maxLineNumber = 10;
+  lineNumber = 0;
 
   constructor(
     x: number,
-    y: number
+    y: number,
+    maxLineNumber?: number
   ) {
     this.x = x;
     this.y = y;
+    maxLineNumber && (this.maxLineNumber = maxLineNumber);
   }
 
   /**
@@ -123,17 +129,24 @@ class MouseParticles implements MouseParticlesState {
    * @param ctx CanvasRenderingContext2D 2d 画笔
    * @param nextCircle Particles
    */
-  drawLine(ctx: CanvasRenderingContext2D, nextCircle: Particles) {
+  drawLine(ctx: CanvasRenderingContext2D, nextCircle: Particles): boolean {
     // 两个圆点之间的距离
     const distance = Math.sqrt(Math.pow(this.x - nextCircle.x, 2) + Math.pow(this.y - nextCircle.y, 2));
-    if (distance < 150) {
+    console.log(this.lineNumber)
+    if (distance < 150 && this.lineNumber < this.maxLineNumber) {
       ctx.beginPath();
       ctx.moveTo(this.x, this.y);
       ctx.lineTo(nextCircle.x, nextCircle.y);
       ctx.closePath();
-      ctx.strokeStyle = '#666';
+      ctx.strokeStyle = '#eee';
       ctx.stroke();
+      this.lineNumber += 1;
     }
+    return this.lineNumber < this.maxLineNumber
+  }
+
+  resetLineNumber() {
+    this.lineNumber = 0;
   }
 
   setPosition(
