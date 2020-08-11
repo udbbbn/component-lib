@@ -24,6 +24,7 @@ export default function Particle() {
       mouseParticles = new MouseParticles(0, 0);
       canvas.onmousemove = mouseMove;
       canvas.onmouseout = mouseOut;
+      window.onresize = canvasResize;
       circlesInit(20, w, h);
     }
   }
@@ -69,6 +70,13 @@ export default function Particle() {
 
   function mouseOut(e: MouseEvent) {
     mouseParticles!.setPosition(0, 0);
+  }
+
+  function canvasResize() {
+    const { width, height } = canvas!.getBoundingClientRect();
+    canvas!.width = width;
+    canvas!.height = height;
+    console.log(canvas)
   }
 
   /**
