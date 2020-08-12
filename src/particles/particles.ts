@@ -76,17 +76,26 @@ class Particles implements ParticlesState {
       const distance = Math.sqrt(Math.pow(this.x - mouseX, 2) + Math.pow(this.y - mouseY, 2));
       // 直接修改 x y 坐标 形成加速效果
       if (distance >= this.lineMinDistance && distance <= this.lineMaxDistance) {
-        this.x += (mouseX - this.x) / 20;
-        this.y += (mouseY - this.y) / 20;
+        const tranX = this.x + (mouseX - this.x) / 20;
+        const tranY = this.y + (mouseY - this.y) / 20;
+        // 加速时碰撞检测 并 预留两个位移距离 (一个位移距离为 mx / 2)
+        this.x = (tranX < this.canvasW && tranX > 0) ? tranX : tranX < 0 ? Math.abs(0 + this.mx) : Math.abs(this.canvasW - this.mx);
+        this.y = (tranY < this.canvasH && tranY > 0) ? tranY : tranY < 0 ? Math.abs(0 + this.my) : Math.abs(this.canvasH - this.my);
       }
-    } else {
-      // 判断是否在容器内 是则继续执行 反之位移取反
-      this.mx = (this.x < this.canvasW && this.x > 0) ? this.mx : (-this.mx);
-      this.my = (this.y < this.canvasH && this.y > 0) ? this.my : (-this.my);
     }
+    // 判断是否在容器内 是则继续执行 反之位移取反
+    this.mx = (this.x < this.canvasW && this.x > 0) ? this.mx : (-this.mx);
+    this.my = (this.y < this.canvasH && this.y > 0) ? this.my : (-this.my);
     // 此处的默认移动移动 在鼠标悬停时可造成抖动效果
     this.x += this.mx / 2;
     this.y += this.my / 2;
+  }
+
+  setPosition(x: number, y: number, w: number, h: number) {
+    this.x = x;
+    this.y = y;
+    this.canvasW = w;
+    this.canvasH = h;
   }
 
 }
