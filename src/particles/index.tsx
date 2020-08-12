@@ -1,5 +1,6 @@
 import React, { useEffect, ChangeEvent } from 'react';
 import Particles, { MouseParticles } from './particles';
+import Debounce from 'lodash.debounce'
 import './index.scss'
 
 export default function Particle() {
@@ -25,7 +26,7 @@ export default function Particle() {
       mouseParticles = new MouseParticles(0, 0);
       canvas.onmousemove = mouseMove;
       canvas.onmouseout = mouseOut;
-      window.onresize = canvasResize;
+      window.onresize = Debounce(canvasResize, 300);
       circlesInit(getCirclesLength(), w, h);
     }
   }
@@ -56,12 +57,13 @@ export default function Particle() {
           circles[i].drawLine(ctx as CanvasRenderingContext2D, circles[j])
         }
       }
-    }
-    for(let i = 0; i < circles.length; i++) {
-      circles[i].move(attract, mouseParticles!.x, mouseParticles!.y);
-      circles[i].drawCircle(ctx as CanvasRenderingContext2D);
-      for (let j = i+1; j < circles.length; j++) {
-        circles[i].drawLine(ctx as CanvasRenderingContext2D, circles[j])
+    } else {
+      for(let i = 0; i < circles.length; i++) {
+        circles[i].move(attract, mouseParticles!.x, mouseParticles!.y);
+        circles[i].drawCircle(ctx as CanvasRenderingContext2D);
+        for (let j = i+1; j < circles.length; j++) {
+          circles[i].drawLine(ctx as CanvasRenderingContext2D, circles[j])
+        }
       }
     }
     requestAnimationFrame(draw);
@@ -83,6 +85,9 @@ export default function Particle() {
     canvas!.height = height;
     w = canvas!.width = canvas!.offsetWidth;
     h = canvas!.height = canvas!.offsetHeight;
+    for (let j = 0; j < circles.length; j++) {
+      circles[j].setPosition(Math.random() * w, Math.random() * h, w, h);
+    }
   }
 
   /**
