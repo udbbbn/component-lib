@@ -4,13 +4,15 @@ import './App.css';
 
 import Bullet from './bullet'
 import Particle from './particles'
+import VirtualList from './virtual-list'
 
 function App() {
 
   return (
     <div className="App">
-      <Bullet></Bullet>
-      <Particle></Particle>
+      {/* <Bullet></Bullet>
+      <Particle></Particle> */}
+      <VirtualList></VirtualList>
       {/* <header className="App-header">
         <img src={logo} className="App-logo" alt="logo" />
         <p>
