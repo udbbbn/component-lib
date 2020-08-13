@@ -1,0 +1,27 @@
+.list_view {
+  width: 300px;
+  height: 400px;
+  border: 1px solid #eee;
+  position: relative;
+  overflow: auto;
+}
+
+.list_placeholder {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  z-index: -1;
+}
+.list_content {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+}
+.list_item {
+  padding: 5px;
+  color: #666;
+  line-height: 30px;
+  box-sizing: border-box;
+}
