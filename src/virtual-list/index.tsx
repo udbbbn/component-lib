@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import style from  './index.module.scss'
+import { CLIENT_RENEG_LIMIT } from 'tls';
 
 interface VirtualListState {
   list: any[]
   visibleList: any[]
   viewHeight: number
-  listTransY: number // 
+  listTransY: number 
 }
 
 interface ListSource {
@@ -19,6 +20,7 @@ interface VirtualListProps {
   bufferSize: number // 预渲染 item 数量 建议为双数可均匀分配至当前可视窗口的上下位
   listSource: ListSource[] // 数据源
   sourceValueKey: string // 渲染 listSource时 key 的取值
+  pullDownRefresh: boolean // 是否开启下拉刷新
 }
 
 export default class VirtualList extends React.Component<VirtualListProps, VirtualListState> {
@@ -28,12 +30,15 @@ export default class VirtualList extends React.Component<VirtualListProps, Virtu
     listHeight: 400,
     bufferSize: 6,
     listSource: Array(100).fill(1).map((el, i) => ({ key: i, value: i })),
-    sourceValueKey: 'value'
+    sourceValueKey: 'value',
+    pullDownRefresh: true
   }
 
   listView = React.createRef<HTMLDivElement>()
   startIdx = 0
   endIdx = 0
+  touchStartPos: {x: number, y: number} = { x: 0, y: 0 }
+  touchEndPos: {x: number, y: number} = { x: 0, y: 0 }
 
   state: VirtualListState = {
     list: [],
@@ -47,12 +52,17 @@ export default class VirtualList extends React.Component<VirtualListProps, Virtu
   }
 
   initList() {
-    const { listSource } = this.props;
+    const { listSource, pullDownRefresh } = this.props;
     this.setState({
       list: listSource,
       viewHeight: this.getViewHeight(listSource.length)
     }, () => this.updateVisibleList())
     this.listView.current!.addEventListener('scroll', this.scroll);
+    if (pullDownRefresh) {
+      this.listView.current!.addEventListener('touchstart', this.touchStart);
+      this.listView.current!.addEventListener('touchmove', this.touchMove);
+      this.listView.current!.addEventListener('touchend', this.touchEnd);
+    }
   }
 
   // 更新视图
@@ -102,6 +112,27 @@ export default class VirtualList extends React.Component<VirtualListProps, Virtu
   scroll = (e: Event) => {
     const { scrollTop } = (e.target as HTMLDivElement);
     this.updateVisibleList(scrollTop);
+  }
+
+  // touch 事件
+  touchStart = (e: TouchEvent) => {
+    const { touches } = e;
+    const{ clientX: x, clientY: y } = touches[0];
+    this.touchStartPos = { x, y };
+  }
+
+  touchMove = (e: TouchEvent) => {
+    const { touches } = e;
+    const{ clientX, clientY } = touches[0];
+    const { x, y } = this.touchStartPos;
+    console.log(clientX - x, clientY - y);
+  }
+
+  touchEnd = (e: TouchEvent) => {
+    const { touches } = e;
+    console.log('touchEnd attact');
+    // const{ clientX, clientY } = touches[0];
+    // console.log('end', clientX, clientY);
   }
 
   render() {
