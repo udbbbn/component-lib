@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
+import classNames from 'classnames';
 import style from  './index.module.scss'
-import { CLIENT_RENEG_LIMIT } from 'tls';
 
 interface VirtualListState {
   list: any[]
   visibleList: any[]
   viewHeight: number
   listTransY: number 
+  touchMoveDistance: number
+  refreshSwitch: number // 0 未刷新 1 正在刷新 2 刷新成功
 }
 
 interface ListSource {
@@ -21,7 +23,12 @@ interface VirtualListProps {
   listSource: ListSource[] // 数据源
   sourceValueKey: string // 渲染 listSource时 key 的取值
   pullDownRefresh: boolean // 是否开启下拉刷新
+  refreshCallBack: Function // 下拉刷新回调
+  refreshStatus: number // 下拉刷新时会把执行权交给 业务 业务代码执行完需要将当前变量修改 解除loading态
 }
+
+const PULL_DOWN_WRAPPER_HEIGHT = 50; // 下拉刷新的 ui 高度
+const RESISTANCE = .2; // 拖动的阻力 
 
 export default class VirtualList extends React.Component<VirtualListProps, VirtualListState> {
 
@@ -31,7 +38,9 @@ export default class VirtualList extends React.Component<VirtualListProps, Virtu
     bufferSize: 6,
     listSource: Array(100).fill(1).map((el, i) => ({ key: i, value: i })),
     sourceValueKey: 'value',
-    pullDownRefresh: true
+    pullDownRefresh: true,
+    refreshStatus: 0,
+    refreshCallBack: () => {}
   }
 
   listView = React.createRef<HTMLDivElement>()
@@ -39,16 +48,34 @@ export default class VirtualList extends React.Component<VirtualListProps, Virtu
   endIdx = 0
   touchStartPos: {x: number, y: number} = { x: 0, y: 0 }
   touchEndPos: {x: number, y: number} = { x: 0, y: 0 }
+  currentScrollTop = 0
 
   state: VirtualListState = {
     list: [],
     visibleList: [],
     viewHeight: 0,
     listTransY: 0,
+    touchMoveDistance: 0,
+    refreshSwitch: 0
   }
 
   componentDidMount() {
     this.initList();
+  }
+
+  static getDerivedStateFromProps(props: VirtualListProps, state: VirtualListState) {
+    console.log(props.refreshStatus, state.refreshSwitch);
+    if (props.refreshStatus !== state.refreshSwitch) {
+      let temp:  Partial<VirtualListState> = {
+        refreshSwitch: props.refreshStatus
+      };
+      // 从 刷新成功 状态重置到 未刷新 状态
+      if (props.refreshStatus === 0 && state.refreshSwitch === 2) {
+        temp = { ...temp, touchMoveDistance: 0, listTransY: 0 }
+      }
+      return temp
+    }
+    return null
   }
 
   initList() {
@@ -111,6 +138,7 @@ export default class VirtualList extends React.Component<VirtualListProps, Virtu
 
   scroll = (e: Event) => {
     const { scrollTop } = (e.target as HTMLDivElement);
+    this.currentScrollTop = scrollTop;
     this.updateVisibleList(scrollTop);
   }
 
@@ -123,25 +151,39 @@ export default class VirtualList extends React.Component<VirtualListProps, Virtu
 
   touchMove = (e: TouchEvent) => {
     const { touches } = e;
-    const{ clientX, clientY } = touches[0];
-    const { x, y } = this.touchStartPos;
-    console.log(clientX - x, clientY - y);
+    const{ clientY } = touches[0];
+    const { y } = this.touchStartPos;
+    const moveDistance = Math.abs(clientY - y) * RESISTANCE;
+    if (this.currentScrollTop === 0) { 
+      const temp = moveDistance > PULL_DOWN_WRAPPER_HEIGHT ? PULL_DOWN_WRAPPER_HEIGHT : moveDistance;
+      this.setState({
+        touchMoveDistance: temp,
+        listTransY: temp,
+      })
+     }
   }
 
   touchEnd = (e: TouchEvent) => {
-    const { touches } = e;
-    console.log('touchEnd attact');
-    // const{ clientX, clientY } = touches[0];
-    // console.log('end', clientX, clientY);
+    const { touchMoveDistance } = this.state;
+    if (touchMoveDistance === PULL_DOWN_WRAPPER_HEIGHT) {
+      this.props.refreshCallBack();
+    } else {
+        this.setState({
+          touchMoveDistance: 0,
+          listTransY: 0,
+          refreshSwitch: 0
+        })
+    }
   }
 
   render() {
     const { sourceValueKey, itemHeight } = this.props;
-    const { visibleList, viewHeight, listTransY } = this.state;
+    const { visibleList, viewHeight, listTransY, touchMoveDistance, refreshSwitch } = this.state;
     return (
       <div className={style.list_view} ref={this.listView}>
         <div className={style.list_placeholder} style={{ height: `${viewHeight}px` }}></div>
         <div className={style.list_content} style={{ transform: `translate3d(0, ${listTransY}px, 0)` }}>
+          <PullDownUi height={touchMoveDistance} refreshSwitch={refreshSwitch}></PullDownUi>
           {
             visibleList.map(el => (
               <div className={style.list_item} style={{ height: `${itemHeight}px` }} key={el.key}>{el[sourceValueKey]}</div>
@@ -151,4 +193,24 @@ export default class VirtualList extends React.Component<VirtualListProps, Virtu
       </div>
     )
   }
+}
+
+interface PullDownProps {
+  height: number,
+  refreshSwitch: number
+}
+
+function PullDownUi(props: PullDownProps) {
+  const { height, refreshSwitch } = props;
+
+  return (
+    <div className={style.pull_down} style={{ transform: `translate3d(0, ${-PULL_DOWN_WRAPPER_HEIGHT + height}px, 0)` }}>
+      <div className={style.pull_wrapper}>
+        {
+          refreshSwitch === 2 ? <div></div> : <div className={classNames(style.loading_gif, {[`${style.loading_animation}`]: refreshSwitch} )} style={{ transform: `rotate(${height * 15}deg)` }}></div>
+        }
+        <div>{ refreshSwitch === 2 ? '刷新成功' : refreshSwitch === 1 ? '正在刷新...' : height < 50 ? '下拉刷新' : '松手刷新哦~' }</div>
+      </div>
+    </div>
+  )
 }
