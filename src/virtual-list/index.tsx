@@ -170,14 +170,16 @@ export default class VirtualList extends React.Component<VirtualListProps, Virtu
 
   touchEnd = (e: TouchEvent) => {
     const { touchMoveDistance } = this.state;
-    if (touchMoveDistance === PULL_DOWN_WRAPPER_HEIGHT) {
-      this.props.refreshCallBack();
-    } else {
+    if (this.currentScrollTop === 0) { 
+      if (touchMoveDistance === PULL_DOWN_WRAPPER_HEIGHT) {
+        this.props.refreshCallBack();
+      } else {
         this.setState({
           touchMoveDistance: 0,
           listTransY: 0,
           refreshSwitch: REFRESH_STATUS.pending
         })
+      }
     }
   }
 
