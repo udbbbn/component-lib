@@ -4,26 +4,21 @@ import './App.css';
 
 import Bullet from './bullet'
 import Particle from './particles'
-import VirtualList from './virtual-list'
+import VirtualList, { REFRESH_STATUS } from './virtual-list'
 
 function App() {
 
-  const [refreshStatus, setRefreshStatus] = useState(0);
+  const [refreshStatus, setRefreshStatus] = useState<REFRESH_STATUS>(REFRESH_STATUS.pending);
 
   function virtualListRefresh() {
-    setRefreshStatus(1);
-    console.log('refresh');
+    setRefreshStatus(REFRESH_STATUS.ongoing);
     setTimeout(() => {
-      setRefreshStatus(2);
+      setRefreshStatus(REFRESH_STATUS.idle);
       setTimeout(() => {
-        setRefreshStatus(0);
+        setRefreshStatus(REFRESH_STATUS.pending);
       }, 500)
     }, 1500);
   }
-
-  useEffect(() => {
-    console.log('useEffect', refreshStatus);
-  }, [refreshStatus])
 
   return (
     <div className="App">

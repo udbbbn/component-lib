@@ -2,13 +2,19 @@ import React, { useState } from 'react';
 import classNames from 'classnames';
 import style from  './index.module.scss'
 
+export enum REFRESH_STATUS{
+  idle = 2, // 刷新完成
+  ongoing = 1, // 刷新中
+  pending = 0, // 等待刷新
+}
+
 interface VirtualListState {
   list: any[]
   visibleList: any[]
   viewHeight: number
   listTransY: number 
   touchMoveDistance: number
-  refreshSwitch: number // 0 未刷新 1 正在刷新 2 刷新成功
+  refreshSwitch: REFRESH_STATUS // 0 未刷新 1 正在刷新 2 刷新成功
 }
 
 interface ListSource {
@@ -24,7 +30,7 @@ interface VirtualListProps {
   sourceValueKey: string // 渲染 listSource时 key 的取值
   pullDownRefresh: boolean // 是否开启下拉刷新
   refreshCallBack: Function // 下拉刷新回调
-  refreshStatus: number // 下拉刷新时会把执行权交给 业务 业务代码执行完需要将当前变量修改 解除loading态
+  refreshStatus: REFRESH_STATUS // 下拉刷新时会把执行权交给 业务 业务代码执行完需要将当前变量修改 解除loading态
 }
 
 const PULL_DOWN_WRAPPER_HEIGHT = 50; // 下拉刷新的 ui 高度
@@ -64,13 +70,12 @@ export default class VirtualList extends React.Component<VirtualListProps, Virtu
   }
 
   static getDerivedStateFromProps(props: VirtualListProps, state: VirtualListState) {
-    console.log(props.refreshStatus, state.refreshSwitch);
     if (props.refreshStatus !== state.refreshSwitch) {
       let temp:  Partial<VirtualListState> = {
         refreshSwitch: props.refreshStatus
       };
       // 从 刷新成功 状态重置到 未刷新 状态
-      if (props.refreshStatus === 0 && state.refreshSwitch === 2) {
+      if (props.refreshStatus === REFRESH_STATUS.pending && state.refreshSwitch === REFRESH_STATUS.idle) {
         temp = { ...temp, touchMoveDistance: 0, listTransY: 0 }
       }
       return temp
@@ -171,7 +176,7 @@ export default class VirtualList extends React.Component<VirtualListProps, Virtu
         this.setState({
           touchMoveDistance: 0,
           listTransY: 0,
-          refreshSwitch: 0
+          refreshSwitch: REFRESH_STATUS.pending
         })
     }
   }
@@ -207,9 +212,9 @@ function PullDownUi(props: PullDownProps) {
     <div className={style.pull_down} style={{ transform: `translate3d(0, ${-PULL_DOWN_WRAPPER_HEIGHT + height}px, 0)` }}>
       <div className={style.pull_wrapper}>
         {
-          refreshSwitch === 2 ? <div></div> : <div className={classNames(style.loading_gif, {[`${style.loading_animation}`]: refreshSwitch} )} style={{ transform: `rotate(${height * 15}deg)` }}></div>
+          refreshSwitch === REFRESH_STATUS.idle ? <div></div> : <div className={classNames(style.loading_gif, {[`${style.loading_animation}`]: refreshSwitch} )} style={{ transform: `rotate(${height * 15}deg)` }}></div>
         }
-        <div>{ refreshSwitch === 2 ? '刷新成功' : refreshSwitch === 1 ? '正在刷新...' : height < 50 ? '下拉刷新' : '松手刷新哦~' }</div>
+        <div>{ refreshSwitch === REFRESH_STATUS.idle ? '刷新成功' : refreshSwitch === REFRESH_STATUS.ongoing ? '正在刷新...' : height < 50 ? '下拉刷新' : '松手刷新哦~' }</div>
       </div>
     </div>
   )
