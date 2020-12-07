@@ -1,3 +1,9 @@
+### 项目包含下列组件
+
+1. 弹幕组件
+2. canvas 粒子效果
+3. 虚拟列表
+
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
 ## Available Scripts

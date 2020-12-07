@@ -9,8 +9,8 @@ export enum REFRESH_STATUS {
 }
 
 interface VirtualListState {
-	list: any[]
-	visibleList: any[]
+	list: unknown[]
+	visibleList: unknown[]
 	viewHeight: number
 	listTransY: number
 	touchMoveDistance: number
@@ -93,11 +93,11 @@ export default class VirtualList extends React.Component<VirtualListProps, Virtu
 			},
 			() => this.updateVisibleList()
 		)
-		this.listView.current!.addEventListener('scroll', this.scroll)
+		this.listView.current?.addEventListener('scroll', this.scroll)
 		if (pullDownRefresh) {
-			this.listView.current!.addEventListener('touchstart', this.touchStart)
-			this.listView.current!.addEventListener('touchmove', this.touchMove)
-			this.listView.current!.addEventListener('touchend', this.touchEnd)
+			this.listView.current?.addEventListener('touchstart', this.touchStart)
+			this.listView.current?.addEventListener('touchmove', this.touchMove)
+			this.listView.current?.addEventListener('touchend', this.touchEnd)
 		}
 	}
 
@@ -177,7 +177,7 @@ export default class VirtualList extends React.Component<VirtualListProps, Virtu
 		const { touchMoveDistance } = this.state
 		if (this.currentScrollTop === 0) {
 			if (touchMoveDistance === PULL_DOWN_WRAPPER_HEIGHT) {
-				(this.props.refreshCallBack as () => void)()
+				;(this.props.refreshCallBack as () => void)()
 			} else {
 				this.setState({
 					touchMoveDistance: 0,
@@ -196,7 +196,7 @@ export default class VirtualList extends React.Component<VirtualListProps, Virtu
 				<div className={style.list_placeholder} style={{ height: `${viewHeight}px` }}></div>
 				<div className={style.list_content} style={{ transform: `translate3d(0, ${listTransY}px, 0)` }}>
 					<PullDownUi height={touchMoveDistance} refreshSwitch={refreshSwitch}></PullDownUi>
-					{visibleList.map(el => (
+					{visibleList.map((el: any) => (
 						<div className={style.list_item} style={{ height: `${itemHeight}px` }} key={el.key}>
 							{el[sourceValueKey]}
 						</div>
