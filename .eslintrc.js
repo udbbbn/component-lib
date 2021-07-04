@@ -1,16 +1,16 @@
 module.exports = {
 	env: {
 		browser: true,
-		es2020: true,
+		es2020: true
 	},
 	extends: ['eslint:recommended', 'plugin:react/recommended', 'plugin:@typescript-eslint/recommended'],
 	parser: '@typescript-eslint/parser',
 	parserOptions: {
 		ecmaFeatures: {
-			jsx: true,
+			jsx: true
 		},
 		ecmaVersion: 12,
-		sourceType: 'module',
+		sourceType: 'module'
 	},
 	plugins: ['react', '@typescript-eslint'],
 	rules: {
@@ -28,5 +28,6 @@ module.exports = {
 		'no-extra-semi': 'error',
 		// 强制所有控制语句使用一致的括号风格
 		curly: 'error',
-	},
-}
+		'@typescript-eslint/no-empty-interface': 'off'
+	}
+};
