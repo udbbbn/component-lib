@@ -28,6 +28,7 @@ module.exports = {
 		'no-extra-semi': 'error',
 		// 强制所有控制语句使用一致的括号风格
 		curly: 'error',
-		'@typescript-eslint/no-empty-interface': 'off'
+		'@typescript-eslint/no-empty-interface': 'off',
+		'@typescript-eslint/explicit-module-boundary-types': 'off'
 	}
 };

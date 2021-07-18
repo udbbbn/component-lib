@@ -1,32 +1,39 @@
-import React, {useState} from 'react';
-import ErrorBoundary, {fallbackProps} from '../index';
+import React, { useState } from 'react';
+import ErrorBoundary, { fallbackProps } from '../index';
 import Button from './test';
 
-function Error({onResetErrorBoundary} : fallbackProps) {
-    return <div>
-        <div>Error component</div>
-        <button onClick={
-            () => onResetErrorBoundary()
-        }>reset</button>
-    </div>
+function Error({ onResetErrorBoundary }: fallbackProps) {
+	return (
+		<div>
+			<div>Error component</div>
+			<button onClick={() => onResetErrorBoundary()}>reset</button>
+		</div>
+	);
 }
 
 function Demo() {
+	const [keys, setKeys] = useState<{ id: number }[]>([]);
 
-    return (
-        <ErrorBoundary fallback={Error}
-            onError={
-                () => console.log('发生错误啦！上报上报')
-            }
-            onReset={
-                () => {
-                    console.log('reset handler');
-                }
-        }>
-            <Button></Button>
-        </ErrorBoundary>
-    );
+	setTimeout(() => {
+		setKeys([{ id: 1 }]);
+		console.log('setKeys');
+	}, 3000);
+
+	return (
+		<ErrorBoundary
+			fallback={Error}
+			resetKeys={keys}
+			onResetKeysChange={(prevKeys, curKeys) => {
+				// 对 resetKey 进行处理，更改后触发自身组件的重置
+			}}
+			onError={() => console.log('发生错误啦！上报上报')}
+			onReset={() => {
+				console.log('reset handler');
+			}}
+		>
+			<Button></Button>
+		</ErrorBoundary>
+	);
 }
 
 export default Demo;
-``
