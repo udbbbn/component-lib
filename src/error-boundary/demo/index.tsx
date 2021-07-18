@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import ErrorBoundary, { fallbackProps } from '../index';
+import ErrorBoundary, { fallbackProps, withErrorBoundary } from '../index';
 import Button from './test';
 
 function Error({ onResetErrorBoundary }: fallbackProps) {
@@ -19,21 +19,19 @@ function Demo() {
 		console.log('setKeys');
 	}, 3000);
 
-	return (
-		<ErrorBoundary
-			fallback={Error}
-			resetKeys={keys}
-			onResetKeysChange={(prevKeys, curKeys) => {
-				// 对 resetKey 进行处理，更改后触发自身组件的重置
-			}}
-			onError={() => console.log('发生错误啦！上报上报')}
-			onReset={() => {
-				console.log('reset handler');
-			}}
-		>
-			<Button></Button>
-		</ErrorBoundary>
-	);
+	const ButtonUseErrorBoundary = withErrorBoundary(Button, {
+		fallback: Error,
+		resetKeys: keys,
+		onResetKeysChange: (prevKeys, curKeys) => {
+			// 对 resetKey 进行处理，更改后触发自身组件的重置
+		},
+		onError: () => console.log('发生错误啦！上报上报'),
+		onReset: () => {
+			console.log('reset handler');
+		}
+	});
+
+	return <ButtonUseErrorBoundary />;
 }
 
 export default Demo;

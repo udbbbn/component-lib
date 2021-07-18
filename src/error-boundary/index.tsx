@@ -1,4 +1,4 @@
-import React, { Component, ReactElement } from 'react';
+import React, { Component, ReactElement, useState } from 'react';
 
 declare function FallbackRender(props: fallbackProps): fallbackElement;
 
@@ -113,3 +113,33 @@ class ErrorBoundary extends Component<React.PropsWithChildren<ErrorBoundaryProps
 }
 
 export default ErrorBoundary;
+
+// 高阶函数
+export function withErrorBoundary<P>(Component: React.ComponentType<P>, errorBoundaryProps: ErrorBoundaryProps) {
+	// eslint-disable-next-line react/display-name
+	const wrapper = (props: P) => (
+		<ErrorBoundary {...errorBoundaryProps}>
+			<Component {...props}></Component>
+		</ErrorBoundary>
+	);
+
+	const name = Component.displayName || Component.name || 'unknown';
+	// devtools的名称! 学到了
+	wrapper.displayName = `withErrorBoundary(${name})`;
+
+	return wrapper;
+}
+
+// 提供 hooks 快捷报错
+// 其实就一个小报错 hooks
+export function useErrorHandler<P = Error>(givenError?: P | null | undefined) {
+	const [error, setError] = useState<P | null>(null);
+	// 初始化遇到错误直接抛出
+	if (givenError) {
+		throw givenError;
+	}
+	if (error) {
+		throw error;
+	}
+	return setError;
+}
